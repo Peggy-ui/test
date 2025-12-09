@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         """初始化使用者介面。"""
-        self.setWindowTitle("記事本 V8.5      Power by STK-KUO")
+        self.setWindowTitle("記事本 V8.5      Power by STK-PEGGY")
         self.setGeometry(100, 100, 600, 650)
         self.setStyleSheet("background-color: #2b2b2b;")
         self.text_edit = QTextEdit(self)
