@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
         self.page_selector.addItems([f'page{i+1}' for i in range(20)])
         self.page_selector.setStyleSheet("background-color: white; color: black;")
         self.page_selector.currentIndexChanged.connect(self.switch_page)
-        self.page_selector.setFocusPolicy(QtCore.Qt.NoFocus) # 避免 Enter 鍵觸發下拉選單
+        self.page_selector.setFocusPolicy(QtCore.Qt.NoFocus) # NoFocus 避免 Enter 鍵觸發下拉選單
         toolbar.addWidget(self.page_selector)
         self.update_page_selector_titles()
 
