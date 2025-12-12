@@ -17,7 +17,10 @@ WINDOW_TITLE = f'{PROGRAM_NAME} Ver {TOOL_VERSION}'
 REMARK = '主要更新：add boncpu.cc'
 
 # 取得程式所在目錄的絕對路徑 (用於檔案路徑強健性)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    SCRIPT_DIR = os.path.dirname(sys.executable)
+else:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 商城列表 (將由 domain.txt 載入)
 HOST_API_LIST = []
