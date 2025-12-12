@@ -163,12 +163,12 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
         # === 匯入採購單 (選項 33 ~ 48) ===
         else:
             file_name = FILE_MAP['purchase']
-            endpoint = '/f9_import_purchase'
+            endpoint = '/f9_import_purorder'
             current_password = PWD_PURCHASE_ACTION # 採購單使用專屬密碼
 
         # 3. 統一組裝 API URL
         api_url = f'https://apiinternal.{target_host}{endpoint}?password={current_password}'
-        
+
         # 4. 執行檔案上傳
         full_file_path = os.path.join(SCRIPT_DIR, file_name)
         if not os.path.exists(full_file_path):
@@ -186,10 +186,11 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
                 data.add_field('file', f, filename=file_name, content_type='text/plain')
                 
                 async with session.post(api_url, data=data, timeout=10) as response:
+                    resp_text = await response.text()
                     if response.status == 200:
                         print("上傳成功")
+                        print(f"響應資訊: {resp_text}")
                     else:
-                        resp_text = await response.text()
                         print(f"上傳失敗 HTTP {response.status} - {resp_text}")
                         
         except Exception as e:
