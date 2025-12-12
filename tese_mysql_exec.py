@@ -3,6 +3,8 @@ import inspect
 import random
 import time
 import asyncmy
+import os
+import sys
 from types import SimpleNamespace
 from config_api import (MYSQL_DB, MYSQL_HOST, MYSQL_MAXSIZE, MYSQL_MINSIZE,
                             MYSQL_PASSWD, MYSQL_PORT, MYSQL_USER)

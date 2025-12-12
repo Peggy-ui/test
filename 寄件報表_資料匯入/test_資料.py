@@ -115,7 +115,7 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
     # 利用餘數計算索引 (例如 1, 17, 33 對應同一個 host)
     idx = (select_mall - 1) % list_len
     target_host = HOST_API_LIST[idx]
-    print(f'選擇的商城: {target_host}')
+    # print(f'選擇的商城: {target_host}') # Moved to after URL construction
 
     file_name = ""
     endpoint = ""
@@ -168,6 +168,7 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
 
         # 3. 統一組裝 API URL
         api_url = f'https://apiinternal.{target_host}{endpoint}?password={current_password}'
+        print(f'選擇的商城: {target_host} URL: {api_url}')
 
         # 4. 執行檔案上傳
         full_file_path = os.path.join(SCRIPT_DIR, file_name)
@@ -191,7 +192,7 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
                         print("上傳成功")
                         print(f"響應資訊: {resp_text}")
                     else:
-                        print(f"上傳失敗 HTTP {response.status} - {resp_text}")
+                        print(f"上傳失敗 HTTP {response.status} - 響應資訊:{resp_text}")
                         
         except Exception as e:
             print(f'錯誤! 處理失敗! {str(e)}')
