@@ -18,7 +18,10 @@ WINDOW_TITLE = f'{PROGRAM_NAME} Ver {TOOL_VERSION}'
 REMARK = '主要更新：add boncpu.cc'
 
 # 取得程式所在目錄的絕對路徑 (用於檔案路徑強健性)
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    SCRIPT_DIR = os.path.dirname(sys.executable)
+else:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # API Host 列表 (將由 domain.txt 載入)
 HOST_API_LIST = []
@@ -47,6 +50,7 @@ HOST_API_LIST = load_domains()
 # 密碼設定
 PWD_QUERY_PENDING = '9=Hev%wZmtR9fFaGXxWq+cWdf+h$GWQk'
 PWD_IMPORT_ACTION = 'SbT?.%23mkMKp8D5qy6mk?vhzc9%23Y4uhFy'
+PWD_PURCHASE_ACTION = 'LSldRLRo5VzucUV9YxMBCJ490vw3PfQs1XVpGmTJ'
 
 # 檔案名稱對應
 FILE_MAP = {
@@ -115,6 +119,7 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
 
     file_name = ""
     endpoint = ""
+    current_password = PWD_IMPORT_ACTION # 預設為 PWD_IMPORT_ACTION
     
     # 2. 分歧邏輯：設定檔案、端點與執行特殊檢查
     try:
@@ -158,11 +163,12 @@ async def process_import_task(select_mall: int, session: aiohttp.ClientSession):
         # === 匯入採購單 (選項 33 ~ 48) ===
         else:
             file_name = FILE_MAP['purchase']
-            endpoint = '/f7_import_purchase'
+            endpoint = '/f9_import_purchase'
+            current_password = PWD_PURCHASE_ACTION # 採購單使用專屬密碼
 
         # 3. 統一組裝 API URL
-        api_url = f'https://apiinternal.{target_host}{endpoint}?password={PWD_IMPORT_ACTION}'
-
+        api_url = f'https://apiinternal.{target_host}{endpoint}?password={current_password}'
+        
         # 4. 執行檔案上傳
         full_file_path = os.path.join(SCRIPT_DIR, file_name)
         if not os.path.exists(full_file_path):
