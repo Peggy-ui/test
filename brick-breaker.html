@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>霓虹打磚塊 - Neon Brick Breaker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 10px #ff006e) drop-shadow(0 0 20px #8338ec);
+            }
+            to {
+                filter: drop-shadow(0 0 20px #8338ec) drop-shadow(0 0 30px #3a86ff);
+            }
+        }
+
+        .info-panel {
+            display: flex;
+            gap: 50px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(131, 56, 236, 0.5);
+        }
+
+        .info-label {
+            color: #8338ec;
+            text-shadow: 0 0 10px #8338ec;
+        }
+
+        .info-value {
+            color: #3a86ff;
+            text-shadow: 0 0 10px #3a86ff;
+        }
+
+        canvas {
+            border: 3px solid #8338ec;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(131, 56, 236, 0.8),
+                        0 0 60px rgba(255, 0, 110, 0.4),
+                        inset 0 0 40px rgba(131, 56, 236, 0.2);
+            background: #0a0e27;
+        }
+
+        .game-over-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 14, 39, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #ff006e;
+            box-shadow: 0 0 50px rgba(255, 0, 110, 0.8);
+            text-align: center;
+            display: none;
+        }
+
+        .game-over-screen.show {
+            display: block;
+            animation: popIn 0.5s ease-out;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .game-over-title {
+            font-size: 48px;
+            color: #ff006e;
+            text-shadow: 0 0 20px #ff006e;
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            font-size: 32px;
+            color: #3a86ff;
+            text-shadow: 0 0 15px #3a86ff;
+            margin-bottom: 30px;
+        }
+
+        .restart-button {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 0, 110, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .restart-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(255, 0, 110, 0.9);
+        }
+
+        .restart-button:active {
+            transform: scale(0.95);
+        }
+
+        .victory-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 14, 39, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #3a86ff;
+            box-shadow: 0 0 50px rgba(58, 134, 255, 0.8);
+            text-align: center;
+            display: none;
+        }
+
+        .victory-screen.show {
+            display: block;
+            animation: popIn 0.5s ease-out;
+        }
+
+        .victory-title {
+            font-size: 48px;
+            color: #3a86ff;
+            text-shadow: 0 0 20px #3a86ff;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="title">霓虹打磚塊</h1>
+
+        <div class="info-panel">
+            <div class="info-item">
+                <span class="info-label">分數:</span>
+                <span class="info-value" id="score">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">生命:</span>
+                <span class="info-value" id="lives">3</span>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="game-over-screen" id="gameOverScreen">
+            <div class="game-over-title">遊戲結束！</div>
+            <div class="final-score">最終分數: <span id="finalScore">0</span></div>
+            <button class="restart-button" onclick="restartGame()">重新開始</button>
+        </div>
+
+        <div class="victory-screen" id="victoryScreen">
+            <div class="victory-title">🎉 恭喜過關！ 🎉</div>
+            <div class="final-score">最終分數: <span id="victoryScore">0</span></div>
+            <button class="restart-button" onclick="restartGame()">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 遊戲狀態
+        let score = 0;
+        let lives = 3;
+        let gameRunning = true;
+        let animationId;
+
+        // 球
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            radius: 8,
+            dx: 4,
+            dy: -4,
+            speed: 4
+        };
+
+        // 擋板
+        const paddle = {
+            width: 120,
+            height: 15,
+            x: canvas.width / 2 - 60,
+            y: canvas.height - 30,
+            speed: 8,
+            dx: 0
+        };
+
+        // 磚塊設定
+        const brickConfig = {
+            rows: 5,
+            cols: 10,
+            width: 70,
+            height: 25,
+            padding: 10,
+            offsetTop: 60,
+            offsetLeft: 35,
+            colors: [
+                { color: '#ff006e', glow: 'rgba(255, 0, 110, 0.8)', points: 50 },
+                { color: '#8338ec', glow: 'rgba(131, 56, 236, 0.8)', points: 40 },
+                { color: '#3a86ff', glow: 'rgba(58, 134, 255, 0.8)', points: 30 },
+                { color: '#06ffa5', glow: 'rgba(6, 255, 165, 0.8)', points: 20 },
+                { color: '#ffbe0b', glow: 'rgba(255, 190, 11, 0.8)', points: 10 }
+            ]
+        };
+
+        // 創建磚塊
+        const bricks = [];
+        for (let row = 0; row < brickConfig.rows; row++) {
+            bricks[row] = [];
+            for (let col = 0; col < brickConfig.cols; col++) {
+                const colorData = brickConfig.colors[row];
+                bricks[row][col] = {
+                    x: col * (brickConfig.width + brickConfig.padding) + brickConfig.offsetLeft,
+                    y: row * (brickConfig.height + brickConfig.padding) + brickConfig.offsetTop,
+                    width: brickConfig.width,
+                    height: brickConfig.height,
+                    visible: true,
+                    color: colorData.color,
+                    glow: colorData.glow,
+                    points: colorData.points
+                };
+            }
+        }
+
+        // 繪製球
+        function drawBall() {
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#3a86ff';
+            ctx.fillStyle = '#3a86ff';
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.closePath();
+            ctx.shadowBlur = 0;
+        }
+
+        // 繪製擋板
+        function drawPaddle() {
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#ff006e';
+
+            const gradient = ctx.createLinearGradient(paddle.x, 0, paddle.x + paddle.width, 0);
+            gradient.addColorStop(0, '#ff006e');
+            gradient.addColorStop(0.5, '#8338ec');
+            gradient.addColorStop(1, '#3a86ff');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+            ctx.shadowBlur = 0;
+        }
+
+        // 繪製磚塊
+        function drawBricks() {
+            for (let row = 0; row < brickConfig.rows; row++) {
+                for (let col = 0; col < brickConfig.cols; col++) {
+                    const brick = bricks[row][col];
+                    if (brick.visible) {
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = brick.glow;
+                        ctx.fillStyle = brick.color;
+                        ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+
+                        // 邊框發光效果
+                        ctx.strokeStyle = brick.color;
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+        }
+
+        // 碰撞檢測
+        function collisionDetection() {
+            for (let row = 0; row < brickConfig.rows; row++) {
+                for (let col = 0; col < brickConfig.cols; col++) {
+                    const brick = bricks[row][col];
+                    if (brick.visible) {
+                        if (ball.x + ball.radius > brick.x &&
+                            ball.x - ball.radius < brick.x + brick.width &&
+                            ball.y + ball.radius > brick.y &&
+                            ball.y - ball.radius < brick.y + brick.height) {
+
+                            ball.dy = -ball.dy;
+                            brick.visible = false;
+                            score += brick.points;
+                            updateScore();
+
+                            // 檢查是否過關
+                            checkVictory();
+                        }
+                    }
+                }
+            }
+        }
+
+        // 檢查是否過關
+        function checkVictory() {
+            let allBricksDestroyed = true;
+            for (let row = 0; row < brickConfig.rows; row++) {
+                for (let col = 0; col < brickConfig.cols; col++) {
+                    if (bricks[row][col].visible) {
+                        allBricksDestroyed = false;
+                        break;
+                    }
+                }
+                if (!allBricksDestroyed) break;
+            }
+
+            if (allBricksDestroyed) {
+                gameRunning = false;
+                showVictory();
+            }
+        }
+
+        // 移動球
+        function moveBall() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // 左右牆壁碰撞
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                ball.dx = -ball.dx;
+            }
+
+            // 頂部碰撞
+            if (ball.y - ball.radius < 0) {
+                ball.dy = -ball.dy;
+            }
+
+            // 擋板碰撞
+            if (ball.y + ball.radius > paddle.y &&
+                ball.x > paddle.x &&
+                ball.x < paddle.x + paddle.width) {
+
+                // 根據球撞擊擋板的位置改變反彈角度
+                const hitPos = (ball.x - paddle.x) / paddle.width;
+                const angle = (hitPos - 0.5) * Math.PI / 3; // -60° 到 +60°
+                const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+
+                ball.dx = speed * Math.sin(angle);
+                ball.dy = -speed * Math.cos(angle);
+            }
+
+            // 球掉落
+            if (ball.y + ball.radius > canvas.height) {
+                lives--;
+                updateLives();
+
+                if (lives <= 0) {
+                    gameRunning = false;
+                    showGameOver();
+                } else {
+                    resetBall();
+                }
+            }
+        }
+
+        // 重置球
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height - 100;
+            ball.dx = 4 * (Math.random() > 0.5 ? 1 : -1);
+            ball.dy = -4;
+        }
+
+        // 移動擋板
+        function movePaddle() {
+            paddle.x += paddle.dx;
+
+            // 防止擋板移出畫面
+            if (paddle.x < 0) {
+                paddle.x = 0;
+            }
+            if (paddle.x + paddle.width > canvas.width) {
+                paddle.x = canvas.width - paddle.width;
+            }
+        }
+
+        // 更新分數顯示
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        // 更新生命值顯示
+        function updateLives() {
+            document.getElementById('lives').textContent = lives;
+        }
+
+        // 顯示遊戲結束畫面
+        function showGameOver() {
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.add('show');
+        }
+
+        // 顯示過關畫面
+        function showVictory() {
+            document.getElementById('victoryScore').textContent = score;
+            document.getElementById('victoryScreen').classList.add('show');
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+            // 隱藏結束畫面
+            document.getElementById('gameOverScreen').classList.remove('show');
+            document.getElementById('victoryScreen').classList.remove('show');
+
+            // 重置遊戲狀態
+            score = 0;
+            lives = 3;
+            gameRunning = true;
+
+            updateScore();
+            updateLives();
+
+            // 重置球和擋板
+            resetBall();
+            paddle.x = canvas.width / 2 - paddle.width / 2;
+
+            // 重置所有磚塊
+            for (let row = 0; row < brickConfig.rows; row++) {
+                for (let col = 0; col < brickConfig.cols; col++) {
+                    bricks[row][col].visible = true;
+                }
+            }
+
+            // 重新開始遊戲循環
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            gameLoop();
+        }
+
+        // 主遊戲循環
+        function gameLoop() {
+            if (!gameRunning) {
+                return;
+            }
+
+            // 清空畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製遊戲元素
+            drawBricks();
+            drawBall();
+            drawPaddle();
+
+            // 更新遊戲狀態
+            collisionDetection();
+            moveBall();
+            movePaddle();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // 鍵盤控制
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'Left' || e.key === 'a' || e.key === 'A') {
+                paddle.dx = -paddle.speed;
+            } else if (e.key === 'ArrowRight' || e.key === 'Right' || e.key === 'd' || e.key === 'D') {
+                paddle.dx = paddle.speed;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'Left' || e.key === 'a' || e.key === 'A' ||
+                e.key === 'ArrowRight' || e.key === 'Right' || e.key === 'd' || e.key === 'D') {
+                paddle.dx = 0;
+            }
+        });
+
+        // 滑鼠控制
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+
+            // 讓擋板中心跟隨滑鼠
+            paddle.x = mouseX - paddle.width / 2;
+
+            // 防止擋板移出畫面
+            if (paddle.x < 0) {
+                paddle.x = 0;
+            }
+            if (paddle.x + paddle.width > canvas.width) {
+                paddle.x = canvas.width - paddle.width;
+            }
+        });
+
+        // 開始遊戲
+        gameLoop();
+    </script>
+</body>
+</html>
