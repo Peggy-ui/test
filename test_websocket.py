@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse
 
 """
 然後打開瀏覽器前往：http://localhost:8000 你就可以在網頁上輸入文字，並看到伺服器即時回應。
+執行: python -m uvicorn test_websocket:app --reload 
 """
 
 app = FastAPI()
@@ -26,8 +27,9 @@ html = """
         </ul>
         
         <script>
-            // 建立 WebSocket 連線
-            var ws = new WebSocket("ws://localhost:8000/ws");
+            // 建立 WebSocket 連線 (使用隨機 client_id)
+            var clientId = Math.floor(Math.random() * 1000);
+            var ws = new WebSocket("ws://localhost:8000/ws/" + clientId);
             
             // 當收到 Server 回傳訊息時
             ws.onmessage = function(event) {
@@ -41,9 +43,18 @@ html = """
             // 傳送訊息給 Server
             function sendMessage() {
                 var input = document.getElementById("messageText");
-                ws.send(input.value);
-                input.value = '';
+                if (input.value.trim() !== '') {
+                    ws.send(input.value);
+                    input.value = '';
+                }
             }
+
+            // 支援 Enter 鍵傳送
+            document.getElementById("messageText").addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    sendMessage();
+                }
+            });
         </script>
     </body>
 </html>
@@ -73,6 +84,11 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+# --- 根路由：返回 HTML 頁面 ---
+@app.get("/")
+async def get():
+    return HTMLResponse(html)
+
 # --- 修改後的 Endpoint ---
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
@@ -83,8 +99,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
             data = await websocket.receive_text()
             # 收到某人的訊息，廣播給所有人：「Client #1 說：Hello」
             await manager.broadcast(f"Client #{client_id} 說: {data}")
-            
+            print(f"Client #{client_id} 說: {data}")
     except WebSocketDisconnect:
         # 斷線時移除名單，並通知其他人
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{client_id} 離開了聊天室")
+        print(f"Client #{client_id} 離開了聊天室")
